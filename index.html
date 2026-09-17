@@ -23,13 +23,271 @@
 
 </head>
 <body>
-    <div id="divLicitacao">
-        <form name="form1" method="post" action="./busca_internet.aspx" onsubmit="javascript:return WebForm_OnSubmit();" id="form1">
-<div>
-<input type="hidden" name="ToolkitScriptManager1_HiddenField" id="ToolkitScriptManager1_HiddenField" value=";;AjaxControlToolkit, Version=3.5.7.429, Culture=neutral, PublicKeyToken=28f01b0e84b6d53e:en-US:776e8b41-f645-445e-b0a0-73e096383cec:5546a2b:475a4ef5:effe2a26:4355a41:2a35a54f">
-<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="">
-<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="">
-<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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">
+<div id="divLicitacao" class="licitacao-container">
+
+    <form
+        name="form1"
+        method="post"
+        action="./busca_internet.aspx"
+        onsubmit="javascript:return WebForm_OnSubmit();"
+        id="form1"
+        class="licitacao-form"
+    >
+
+        <!-- Campos ocultos do ASP.NET continuam aqui -->
+
+        <div class="licitacao-card">
+
+            <header class="licitacao-header">
+                <h1 id="tituloLabel">Busca Licitação</h1>
+            </header>
+
+
+            <div class="form-grid">
+
+                <!-- Modalidade -->
+                <div class="form-group">
+                    <label for="modalidadeDropDownList">
+                        Modalidade
+                    </label>
+
+                    <select
+                        name="modalidadeDropDownList"
+                        id="modalidadeDropDownList"
+                    >
+                        <!-- opções existentes -->
+                    </select>
+                </div>
+
+
+                <!-- Número -->
+                <div class="form-group">
+                    <label for="numTextBox">
+                        Número da licitação
+                    </label>
+
+                    <div class="numero-group">
+
+                        <input
+                            name="numTextBox"
+                            type="text"
+                            value="048"
+                            maxlength="4"
+                            id="numTextBox"
+                            placeholder="9999"
+                        >
+
+                        <span class="separador">/</span>
+
+                        <input
+                            name="anoTextBox"
+                            type="text"
+                            value="24"
+                            maxlength="4"
+                            id="anoTextBox"
+                            placeholder="AA"
+                        >
+
+                    </div>
+
+                    <small>
+                        Formato: 9999-AAL. Utilize a letra "L" quando existir.
+                    </small>
+                </div>
+
+
+                <!-- Município -->
+                <div class="form-group">
+                    <label for="municipioTextBox">
+                        Município
+                    </label>
+
+                    <input
+                        name="municipioTextBox"
+                        type="text"
+                        maxlength="50"
+                        id="municipioTextBox"
+                        placeholder="Digite o município"
+                    >
+                </div>
+
+
+                <!-- Segmento -->
+                <div class="form-group">
+                    <label for="segmentoDropDownList">
+                        Segmento de mercado
+                    </label>
+
+                    <select
+                        name="segmentoDropDownList"
+                        id="segmentoDropDownList"
+                    >
+                        <!-- opções existentes -->
+                    </select>
+                </div>
+
+
+                <!-- Data -->
+                <div class="form-group">
+                    <label for="dataTextBox">
+                        Data de abertura do envelope
+                    </label>
+
+                    <div class="input-with-help">
+
+                        <input
+                            name="dataTextBox"
+                            type="text"
+                            id="dataTextBox"
+                            placeholder="dd/mm/aaaa"
+                        >
+
+                        <span
+                            id="CompareValidator1"
+                            class="validation-error"
+                        >
+                            *
+                        </span>
+
+                    </div>
+
+                    <small>
+                        Informe a data no formato dd/mm/aaaa.
+                    </small>
+                </div>
+
+
+                <!-- Situação -->
+                <fieldset class="form-group situacao-group">
+
+                    <legend>Situação</legend>
+
+                    <label class="radio-option">
+                        <input
+                            id="avisoRadioButton"
+                            type="radio"
+                            name="situacao"
+                            value="avisoRadioButton"
+                        >
+
+                        <span>Em Aviso</span>
+                    </label>
+
+
+                    <label class="radio-option">
+                        <input
+                            id="andamentoRadioButton"
+                            type="radio"
+                            name="situacao"
+                            value="andamentoRadioButton"
+                        >
+
+                        <span>Em Andamento</span>
+                    </label>
+
+
+                    <label class="radio-option">
+                        <input
+                            id="encerradaRadioButton"
+                            type="radio"
+                            name="situacao"
+                            value="encerradaRadioButton"
+                        >
+
+                        <span>Encerrada</span>
+                    </label>
+
+                </fieldset>
+
+            </div>
+
+
+            <!-- Ordenação -->
+            <fieldset class="ordenacao">
+
+                <legend>Ordenar resultados</legend>
+
+                <label class="radio-option">
+                    <input
+                        id="crescenteRB"
+                        type="radio"
+                        name="ordenacao"
+                        value="crescenteRB"
+                    >
+
+                    <span>Crescente</span>
+                </label>
+
+
+                <label class="radio-option">
+                    <input
+                        id="decrescenteRB"
+                        type="radio"
+                        name="ordenacao"
+                        value="decrescenteRB"
+                    >
+
+                    <span>Decrescente</span>
+                </label>
+
+
+                <label class="radio-option">
+                    <input
+                        id="prioridadeRB"
+                        type="radio"
+                        name="ordenacao"
+                        value="prioridadeRB"
+                    >
+
+                    <span>Prioridade</span>
+                </label>
+
+            </fieldset>
+
+
+            <!-- Informações -->
+            <div class="info-box">
+
+                <p>
+                    Serão procuradas licitações cuja data de abertura
+                    do envelope esteja entre a data informada e a data atual.
+                </p>
+
+                <p>
+                    Serão considerados editais disponíveis até a data
+                    definida para abertura dos envelopes, além de licitações
+                    em andamento desde a data de abertura até a publicação
+                    da contratação ou encerramento.
+                </p>
+
+            </div>
+
+
+            <!-- Resultado -->
+            <div class="form-footer">
+
+                <span
+                    id="msgLabel"
+                    class="result-message"
+                >
+                    Não foram encontradas licitações com os dados informados.
+                </span>
+
+
+                <input
+                    type="image"
+                    name="buscarImageButton"
+                    id="buscarImageButton"
+                    src="Images/buscar.gif"
+                    alt="Buscar"
+                >
+
+            </div>
+
+        </div>
+
+    </form>
+
 </div>
 
 <script type="text/javascript">
