@@ -51,17 +51,65 @@ export default async function handler(req, res) {
         });
     }
 
+try {
+
+    // =====================================================
+    // IMPORTAR VALIDADORES
+    // =====================================================
+
+    let validarFiltros;
+
     try {
 
-        // =====================================================
-        // IMPORTAÇÕES
-        // =====================================================
+        const modulo =
+            await import("../lib/validators.js");
 
-        const { buscarNoCdhu } =
+        validarFiltros =
+            modulo.validarFiltros;
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao carregar validators.js:",
+            error
+        );
+
+        return res.status(500).json({
+            sucesso: false,
+            etapa: "validators.js",
+            erro: error.message,
+            stack: error.stack
+        });
+    }
+
+    // =====================================================
+    // IMPORTAR CDHU
+    // =====================================================
+
+    let buscarNoCdhu;
+
+    try {
+
+        const modulo =
             await import("../lib/cdhu.js");
 
-        const { validarFiltros } =
-            await import("../lib/validators.js");
+        buscarNoCdhu =
+            modulo.buscarNoCdhu;
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao carregar cdhu.js:",
+            error
+        );
+
+        return res.status(500).json({
+            sucesso: false,
+            etapa: "cdhu.js",
+            erro: error.message,
+            stack: error.stack
+        });
+    }
 
         // =====================================================
         // DADOS RECEBIDOS
