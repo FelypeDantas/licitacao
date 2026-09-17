@@ -25,10 +25,10 @@
        CONFIGURAÇÃO
     ============================================================ */
 
-    const CONFIG = {
-        api: {
-            buscar: '/api/licitacoes'
-        },
+        const CONFIG = {
+            api: {
+                buscar: 'https://licitacao-murex.vercel.app/api/licitacoes'
+            },
 
         campos: {
             formulario: '#formBusca',
