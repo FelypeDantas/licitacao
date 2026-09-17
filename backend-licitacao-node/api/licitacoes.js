@@ -1,21 +1,9 @@
 export default async function handler(req, res) {
-
-    const origin = req.headers.origin;
-
-    const allowedOrigin =
+    res.setHeader(
+        "Access-Control-Allow-Origin",
         process.env.FRONTEND_ORIGIN ||
-        "https://felypedantas.github.io";
-
-    // =========================================================
-    // CORS
-    // =========================================================
-
-    if (origin === allowedOrigin) {
-        res.setHeader(
-            "Access-Control-Allow-Origin",
-            allowedOrigin
-        );
-    }
+            "https://felypedantas.github.io"
+    );
 
     res.setHeader(
         "Access-Control-Allow-Methods",
@@ -27,120 +15,54 @@ export default async function handler(req, res) {
         "Content-Type, Accept"
     );
 
-    res.setHeader(
-        "Access-Control-Max-Age",
-        "86400"
-    );
-
-    // =========================================================
-    // PRE-FLIGHT
-    // =========================================================
-
     if (req.method === "OPTIONS") {
         return res.status(204).end();
     }
 
-    // =========================================================
-    // MÉTODO
-    // =========================================================
-
     if (req.method !== "POST") {
         return res.status(405).json({
             sucesso: false,
-            erro: "Método não permitido. Utilize POST."
+            erro: "Método não permitido."
         });
     }
 
-try {
-
-    // =====================================================
-    // IMPORTAR VALIDADORES
-    // =====================================================
-
-    let validarFiltros;
-
     try {
+        console.log("ETAPA 1: API iniciou");
 
-        const modulo =
+        const body = req.body || {};
+
+        console.log("ETAPA 2: Body recebido");
+        console.log(JSON.stringify(body));
+
+        console.log("ETAPA 3: Importando validators");
+
+        const validators =
             await import("../lib/validators.js");
 
-        validarFiltros =
-            modulo.validarFiltros;
+        console.log("ETAPA 4: Validators carregado");
 
-    } catch (error) {
+        const { validarFiltros } = validators;
 
-        console.error(
-            "Erro ao carregar validators.js:",
-            error
-        );
+        const filtros = validarFiltros(body);
 
-        return res.status(500).json({
-            sucesso: false,
-            etapa: "validators.js",
-            erro: error.message,
-            stack: error.stack
-        });
-    }
+        console.log("ETAPA 5: Filtros validados");
+        console.log(JSON.stringify(filtros));
 
-    // =====================================================
-    // IMPORTAR CDHU
-    // =====================================================
+        console.log("ETAPA 6: Importando CDHU");
 
-    let buscarNoCdhu;
-
-    try {
-
-        const modulo =
+        const cdhu =
             await import("../lib/cdhu.js");
 
-        buscarNoCdhu =
-            modulo.buscarNoCdhu;
+        console.log("ETAPA 7: CDHU carregado");
 
-    } catch (error) {
+        const { buscarNoCdhu } = cdhu;
 
-        console.error(
-            "Erro ao carregar cdhu.js:",
-            error
-        );
-
-        return res.status(500).json({
-            sucesso: false,
-            etapa: "cdhu.js",
-            erro: error.message,
-            stack: error.stack
-        });
-    }
-
-        // =====================================================
-        // DADOS RECEBIDOS
-        // =====================================================
-
-        const filtros = req.body || {};
-
-        // =====================================================
-        // VALIDAÇÃO
-        // =====================================================
-
-        const validacao = validarFiltros(filtros);
-
-        if (!validacao.valido) {
-            return res.status(400).json({
-                sucesso: false,
-                erro: "Dados inválidos.",
-                detalhes: validacao.erros
-            });
-        }
-
-        // =====================================================
-        // BUSCA NA CDHU
-        // =====================================================
+        console.log("ETAPA 8: Consultando CDHU");
 
         const resultado =
             await buscarNoCdhu(filtros);
 
-        // =====================================================
-        // RESPOSTA
-        // =====================================================
+        console.log("ETAPA 9: CDHU respondeu");
 
         return res.status(200).json({
             sucesso: true,
@@ -148,16 +70,22 @@ try {
         });
 
     } catch (error) {
+        console.error("========== ERRO ==========");
+        console.error("Nome:", error?.name);
+        console.error("Mensagem:", error?.message);
+        console.error("Código:", error?.code);
+        console.error("Stack:", error?.stack);
+        console.error("==========================");
 
-        console.error(
-            "Erro na API de licitações:",
-            error
-        );
-
-        return res.status(500).json({
+        return res.status(
+            error?.statusCode || 500
+        ).json({
             sucesso: false,
-            erro: "Não foi possível realizar a pesquisa.",
-            detalhes: error.message
+            erro: error?.message ||
+                "Erro interno.",
+            codigo: error?.code ||
+                "INTERNAL_ERROR",
+            detalhes: error?.details || null
         });
     }
 }
