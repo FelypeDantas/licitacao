@@ -179,6 +179,53 @@ fieldset legend {
     margin: 0;
 }
 
+/* =========================================================
+   Botão
+   ========================================================= */
+
+.btn-buscar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 120px;
+    padding: 10px 24px;
+
+    border: none;
+    border-radius: 6px;
+
+    background-color: #1B1BA1;
+    color: #ffffff;
+
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.1s ease;
+}
+
+.btn-buscar:hover {
+    background-color: #151580;
+}
+
+.btn-buscar:active {
+    transform: scale(0.98);
+}
+
+.btn-buscar:focus-visible {
+    outline: 3px solid rgba(27, 27, 161, 0.3);
+    outline-offset: 2px;
+}
+
+.btn-buscar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 
 /* =========================================================
    ORDENAÇÃO
