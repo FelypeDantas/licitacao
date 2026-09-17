@@ -1,112 +1,124 @@
 'use strict';
 
 /**
- * Busca de Licitação - CDHU
+ * ============================================================
+ * BUSCA DE LICITAÇÕES - CDHU
+ * ============================================================
  *
- * Responsabilidades:
- * - Inicializar os comportamentos da página
- * - Validar campos antes do envio
- * - Aplicar máscara à data
- * - Controlar mensagens de validação
- * - Atualizar a altura quando a página estiver dentro de iframe
+ * Fluxo:
  *
- * Observação:
- * O postback continua sendo realizado pelo ASP.NET Web Forms.
- * Este arquivo não substitui os controles gerados pelo servidor.
+ * 1. Usuário preenche os filtros
+ * 2. JavaScript coleta os dados
+ * 3. JavaScript envia os dados para a API
+ * 4. Backend consulta o sistema da CDHU
+ * 5. Backend devolve os resultados em JSON
+ * 6. JavaScript apresenta os resultados na tela
+ *
+ * O JavaScript NÃO acessa diretamente o site da CDHU.
+ *
+ * ============================================================
  */
 
 (() => {
 
-    /* =========================================================
-       CONFIGURAÇÕES
-    ========================================================= */
+    /* ============================================================
+       CONFIGURAÇÃO
+    ============================================================ */
 
     const CONFIG = {
-        seletores: {
-            formulario: '#form1',
-            modalidade: '#modalidadeDropDownList',
-            numero: '#numTextBox',
-            ano: '#anoTextBox',
-            municipio: '#municipioTextBox',
-            segmento: '#segmentoDropDownList',
-            data: '#dataTextBox',
-
-            aviso: '#avisoRadioButton',
-            andamento: '#andamentoRadioButton',
-            encerrada: '#encerradaRadioButton',
-
-            crescente: '#crescenteRB',
-            decrescente: '#decrescenteRB',
-            prioridade: '#prioridadeRB',
-
-            mensagem: '#msgLabel',
-            botaoBuscar: '#buscarImageButton',
-            container: '#divLicitacao'
+        api: {
+            buscar: '/api/licitacoes'
         },
 
-        data: {
-            tamanho: 10,
-            mascara: 'dd/mm/aaaa'
+        campos: {
+            formulario: '#formBusca',
+
+            modalidade: '#modalidade',
+            numero: '#numero',
+            ano: '#ano',
+            municipio: '#municipio',
+            segmento: '#segmento',
+            data: '#data',
+
+            situacao: 'input[name="situacao"]:checked',
+            ordenacao: 'input[name="ordenacao"]:checked'
         },
 
-        iframe: {
-            margem: 40
+        elementos: {
+            botaoBuscar: '#btnBuscar',
+            resultados: '#resultados',
+            mensagem: '#mensagem',
+            carregando: '#carregando'
         }
     };
 
 
-    /* =========================================================
+    /* ============================================================
        UTILITÁRIOS
-    ========================================================= */
+    ============================================================ */
 
-    const $ = (selector) => document.querySelector(selector);
+    const DOM = {
 
-    const elementoExiste = (elemento) => elemento !== null;
+        obter(seletor) {
+            return document.querySelector(seletor);
+        },
 
-    const obterElemento = (selector) => $(selector);
+        obterTodos(seletor) {
+            return [...document.querySelectorAll(seletor)];
+        },
 
-
-    /* =========================================================
-       REFERÊNCIAS DOS ELEMENTOS
-    ========================================================= */
-
-    const elementos = {
-        formulario: obterElemento(CONFIG.seletores.formulario),
-
-        modalidade: obterElemento(CONFIG.seletores.modalidade),
-        numero: obterElemento(CONFIG.seletores.numero),
-        ano: obterElemento(CONFIG.seletores.ano),
-        municipio: obterElemento(CONFIG.seletores.municipio),
-        segmento: obterElemento(CONFIG.seletores.segmento),
-        data: obterElemento(CONFIG.seletores.data),
-
-        aviso: obterElemento(CONFIG.seletores.aviso),
-        andamento: obterElemento(CONFIG.seletores.andamento),
-        encerrada: obterElemento(CONFIG.seletores.encerrada),
-
-        crescente: obterElemento(CONFIG.seletores.crescente),
-        decrescente: obterElemento(CONFIG.seletores.decrescente),
-        prioridade: obterElemento(CONFIG.seletores.prioridade),
-
-        mensagem: obterElemento(CONFIG.seletores.mensagem),
-        botaoBuscar: obterElemento(CONFIG.seletores.botaoBuscar),
-        container: obterElemento(CONFIG.seletores.container)
+        valor(seletor) {
+            const elemento = this.obter(seletor);
+            return elemento?.value?.trim() || '';
+        }
     };
 
 
-    /* =========================================================
-       DATA
-    ========================================================= */
+    /* ============================================================
+       ESTADO DA APLICAÇÃO
+    ============================================================ */
 
-    const DataUtils = {
+    const estado = {
+        buscando: false,
+        resultados: []
+    };
 
-        apenasNumeros(valor) {
-            return valor.replace(/\D/g, '');
-        },
 
-        aplicarMascara(valor) {
+    /* ============================================================
+       ELEMENTOS
+    ============================================================ */
 
-            const numeros = this.apenasNumeros(valor)
+    const elementos = {
+        formulario: DOM.obter(CONFIG.campos.formulario),
+
+        modalidade: DOM.obter(CONFIG.campos.modalidade),
+        numero: DOM.obter(CONFIG.campos.numero),
+        ano: DOM.obter(CONFIG.campos.ano),
+        municipio: DOM.obter(CONFIG.campos.municipio),
+        segmento: DOM.obter(CONFIG.campos.segmento),
+        data: DOM.obter(CONFIG.campos.data),
+
+        botaoBuscar: DOM.obter(CONFIG.elementos.botaoBuscar),
+        resultados: DOM.obter(CONFIG.elementos.resultados),
+        mensagem: DOM.obter(CONFIG.elementos.mensagem),
+        carregando: DOM.obter(CONFIG.elementos.carregando)
+    };
+
+
+    /* ============================================================
+       FORMATAÇÃO
+    ============================================================ */
+
+    const Formatador = {
+
+        data(valor) {
+
+            if (!valor) {
+                return '';
+            }
+
+            const numeros = valor
+                .replace(/\D/g, '')
                 .substring(0, 8);
 
             if (numeros.length <= 2) {
@@ -114,52 +126,131 @@
             }
 
             if (numeros.length <= 4) {
-                return `${numeros.substring(0, 2)}/${numeros.substring(2)}`;
+                return (
+                    numeros.substring(0, 2) +
+                    '/' +
+                    numeros.substring(2)
+                );
             }
-
-            return `${numeros.substring(0, 2)}/${numeros.substring(2, 4)}/${numeros.substring(4)}`;
-        },
-
-        formatoValido(valor) {
-            return /^\d{2}\/\d{2}\/\d{4}$/.test(valor);
-        },
-
-        dataValida(valor) {
-
-            if (!this.formatoValido(valor)) {
-                return false;
-            }
-
-            const [dia, mes, ano] = valor.split('/').map(Number);
-
-            const data = new Date(ano, mes - 1, dia);
 
             return (
-                data.getFullYear() === ano &&
-                data.getMonth() === mes - 1 &&
-                data.getDate() === dia
+                numeros.substring(0, 2) +
+                '/' +
+                numeros.substring(2, 4) +
+                '/' +
+                numeros.substring(4)
             );
+        },
+
+        texto(valor) {
+            return String(valor ?? '').trim();
         }
     };
 
 
-    /* =========================================================
+    /* ============================================================
+       COLETA DOS FILTROS
+    ============================================================ */
+
+    const Filtros = {
+
+        obter() {
+
+            const situacao = document.querySelector(
+                CONFIG.campos.situacao
+            );
+
+            const ordenacao = document.querySelector(
+                CONFIG.campos.ordenacao
+            );
+
+            return {
+                modalidade: elementos.modalidade?.value || '',
+                numero: elementos.numero?.value.trim() || '',
+                ano: elementos.ano?.value.trim() || '',
+                municipio: elementos.municipio?.value.trim() || '',
+                segmento: elementos.segmento?.value || '',
+                data: elementos.data?.value.trim() || '',
+
+                situacao: situacao?.value || '',
+                ordenacao: ordenacao?.value || ''
+            };
+        }
+    };
+
+
+    /* ============================================================
+       VALIDAÇÃO
+    ============================================================ */
+
+    const Validacao = {
+
+        executar(filtros) {
+
+            if (!filtros.numero && !filtros.ano) {
+                return {
+                    valido: false,
+                    mensagem: 'Informe o número e o ano da licitação.'
+                };
+            }
+
+            if (filtros.numero && !/^\d{1,4}$/.test(filtros.numero)) {
+                return {
+                    valido: false,
+                    mensagem: 'O número da licitação deve conter apenas números.'
+                };
+            }
+
+            if (filtros.ano && !/^\d{2,4}$/.test(filtros.ano)) {
+                return {
+                    valido: false,
+                    mensagem: 'Informe um ano válido.'
+                };
+            }
+
+            if (
+                filtros.data &&
+                !/^\d{2}\/\d{2}\/\d{4}$/.test(filtros.data)
+            ) {
+                return {
+                    valido: false,
+                    mensagem: 'A data deve estar no formato dd/mm/aaaa.'
+                };
+            }
+
+            return {
+                valido: true,
+                mensagem: ''
+            };
+        }
+    };
+
+
+    /* ============================================================
        MENSAGENS
-    ========================================================= */
+    ============================================================ */
 
     const Mensagem = {
 
-        mostrar(texto, tipo = 'erro') {
+        mostrar(texto, tipo = 'info') {
 
             if (!elementos.mensagem) {
                 return;
             }
 
             elementos.mensagem.textContent = texto;
-
-            elementos.mensagem.dataset.tipo = tipo;
-
+            elementos.mensagem.className = `mensagem ${tipo}`;
             elementos.mensagem.hidden = false;
+        },
+
+        esconder() {
+
+            if (!elementos.mensagem) {
+                return;
+            }
+
+            elementos.mensagem.hidden = true;
+            elementos.mensagem.textContent = '';
         },
 
         erro(texto) {
@@ -168,148 +259,269 @@
 
         sucesso(texto) {
             this.mostrar(texto, 'sucesso');
+        }
+    };
+
+
+    /* ============================================================
+       ESTADO DE CARREGAMENTO
+    ============================================================ */
+
+    const Loading = {
+
+        iniciar() {
+
+            estado.buscando = true;
+
+            elementos.botaoBuscar?.setAttribute(
+                'disabled',
+                'disabled'
+            );
+
+            if (elementos.botaoBuscar) {
+                elementos.botaoBuscar.textContent = 'Buscando...';
+            }
+
+            elementos.carregando?.removeAttribute('hidden');
+
+            Mensagem.esconder();
         },
+
+        finalizar() {
+
+            estado.buscando = false;
+
+            elementos.botaoBuscar?.removeAttribute(
+                'disabled'
+            );
+
+            if (elementos.botaoBuscar) {
+                elementos.botaoBuscar.textContent = 'Buscar';
+            }
+
+            elementos.carregando?.setAttribute(
+                'hidden',
+                ''
+            );
+        }
+    };
+
+
+    /* ============================================================
+       API
+    ============================================================ */
+
+    const API = {
+
+        async buscar(filtros) {
+
+            const resposta = await fetch(
+                CONFIG.api.buscar,
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+
+                    body: JSON.stringify(filtros)
+                }
+            );
+
+            if (!resposta.ok) {
+                throw new Error(
+                    `Erro HTTP ${resposta.status}`
+                );
+            }
+
+            return await resposta.json();
+        }
+    };
+
+
+    /* ============================================================
+       RESULTADOS
+    ============================================================ */
+
+    const Resultados = {
 
         limpar() {
 
-            if (!elementos.mensagem) {
+            if (elementos.resultados) {
+                elementos.resultados.innerHTML = '';
+            }
+
+            estado.resultados = [];
+        },
+
+        renderizar(dados) {
+
+            this.limpar();
+
+            const resultados = Array.isArray(dados)
+                ? dados
+                : dados.resultados;
+
+            if (!resultados || resultados.length === 0) {
+
+                Mensagem.mostrar(
+                    'Nenhuma licitação encontrada.',
+                    'info'
+                );
+
                 return;
             }
 
-            elementos.mensagem.textContent = '';
-            elementos.mensagem.hidden = true;
-            delete elementos.mensagem.dataset.tipo;
+            estado.resultados = resultados;
+
+            resultados.forEach((licitacao) => {
+                this.adicionar(licitacao);
+            });
+
+            Mensagem.sucesso(
+                `${resultados.length} licitação(ões) encontrada(s).`
+            );
+        },
+
+        adicionar(licitacao) {
+
+            if (!elementos.resultados) {
+                return;
+            }
+
+            const item = document.createElement('article');
+
+            item.className = 'resultado-licitacao';
+
+            item.innerHTML = `
+                <div class="resultado-cabecalho">
+                    <strong>
+                        ${this.escapar(
+                            licitacao.numero || '-'
+                        )}
+                    </strong>
+                </div>
+
+                <div class="resultado-conteudo">
+
+                    <div class="resultado-campo">
+                        <span>Modalidade</span>
+                        <strong>
+                            ${this.escapar(
+                                licitacao.modalidade || '-'
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="resultado-campo">
+                        <span>Município</span>
+                        <strong>
+                            ${this.escapar(
+                                licitacao.municipio || '-'
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="resultado-campo">
+                        <span>Situação</span>
+                        <strong>
+                            ${this.escapar(
+                                licitacao.situacao || '-'
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="resultado-campo">
+                        <span>Data de abertura</span>
+                        <strong>
+                            ${this.escapar(
+                                licitacao.dataAbertura || '-'
+                            )}
+                        </strong>
+                    </div>
+
+                </div>
+            `;
+
+            elementos.resultados.appendChild(item);
+        },
+
+        escapar(valor) {
+
+            return String(valor ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
     };
 
 
-    /* =========================================================
-       VALIDAÇÃO
-    ========================================================= */
+    /* ============================================================
+       BUSCA
+    ============================================================ */
 
-    const Validacao = {
+    const Busca = {
 
-        campoObrigatorio(elemento, mensagem) {
+        async executar() {
 
-            if (!elemento) {
-                return true;
+            if (estado.buscando) {
+                return;
             }
 
-            const valor = elemento.value.trim();
+            const filtros = Filtros.obter();
 
-            if (!valor) {
-                this.focar(elemento);
-                Mensagem.erro(mensagem);
+            const validacao = Validacao.executar(
+                filtros
+            );
 
-                return false;
+            if (!validacao.valido) {
+
+                Mensagem.erro(
+                    validacao.mensagem
+                );
+
+                return;
             }
 
-            return true;
-        },
+            Loading.iniciar();
 
-        data() {
+            try {
 
-            if (!elementos.data) {
-                return true;
+                const dados = await API.buscar(
+                    filtros
+                );
+
+                Resultados.renderizar(dados);
+
+            } catch (erro) {
+
+                console.error(
+                    'Erro ao buscar licitação:',
+                    erro
+                );
+
+                Resultados.limpar();
+
+                Mensagem.erro(
+                    'Não foi possível realizar a busca. Tente novamente.'
+                );
+
+            } finally {
+
+                Loading.finalizar();
             }
-
-            const valor = elementos.data.value.trim();
-
-            /*
-             * A data pode permanecer vazia.
-             * O sistema original utiliza a data como filtro opcional.
-             */
-            if (!valor) {
-                return true;
-            }
-
-            if (!DataUtils.dataValida(valor)) {
-
-                this.focar(elementos.data);
-
-                Mensagem.erro('Informe uma data válida.');
-
-                return false;
-            }
-
-            return true;
-        },
-
-        numero() {
-
-            if (!elementos.numero) {
-                return true;
-            }
-
-            const valor = elementos.numero.value.trim();
-
-            if (!valor) {
-                this.focar(elementos.numero);
-
-                Mensagem.erro('Informe o número da licitação.');
-
-                return false;
-            }
-
-            return true;
-        },
-
-        ano() {
-
-            if (!elementos.ano) {
-                return true;
-            }
-
-            const valor = elementos.ano.value.trim();
-
-            if (!valor) {
-                this.focar(elementos.ano);
-
-                Mensagem.erro('Informe o ano da licitação.');
-
-                return false;
-            }
-
-            return true;
-        },
-
-        formulario() {
-
-            Mensagem.limpar();
-
-            if (!this.numero()) {
-                return false;
-            }
-
-            if (!this.ano()) {
-                return false;
-            }
-
-            if (!this.data()) {
-                return false;
-            }
-
-            return true;
-        },
-
-        focar(elemento) {
-
-            elemento.focus();
-
-            elemento.classList.add('campo-invalido');
-
-            setTimeout(() => {
-                elemento.classList.remove('campo-invalido');
-            }, 1500);
         }
     };
 
 
-    /* =========================================================
+    /* ============================================================
        MÁSCARA DA DATA
-    ========================================================= */
+    ============================================================ */
 
-    const DataMask = {
+    const Mascara = {
 
         inicializar() {
 
@@ -317,327 +529,108 @@
                 return;
             }
 
-            elementos.data.addEventListener('input', (evento) => {
+            elementos.data.addEventListener(
+                'input',
+                (evento) => {
+
+                    evento.target.value =
+                        Formatador.data(
+                            evento.target.value
+                        );
 
-                const valorAtual = evento.target.value;
-
-                evento.target.value =
-                    DataUtils.aplicarMascara(valorAtual);
-
-            });
-
-            elementos.data.addEventListener('blur', () => {
-
-                const valor = elementos.data.value.trim();
-
-                if (!valor) {
-                    return;
-                }
-
-                if (!DataUtils.dataValida(valor)) {
-
-                    elementos.data.classList.add('campo-invalido');
-
-                    Mensagem.erro('Informe uma data válida.');
-
-                    return;
-                }
-
-                elementos.data.classList.remove('campo-invalido');
-            });
-        }
-    };
-
-
-    /* =========================================================
-       RADIO BUTTONS
-    ========================================================= */
-
-    const Radios = {
-
-        inicializar() {
-
-            this.configurarGrupo([
-                elementos.aviso,
-                elementos.andamento,
-                elementos.encerrada
-            ]);
-
-            this.configurarGrupo([
-                elementos.crescente,
-                elementos.decrescente,
-                elementos.prioridade
-            ]);
-        },
-
-        configurarGrupo(grupo) {
-
-            grupo
-                .filter(elementoExiste)
-                .forEach((elemento) => {
-
-                    elemento.addEventListener('change', () => {
-
-                        grupo
-                            .filter(elementoExiste)
-                            .forEach((outro) => {
-
-                                outro.parentElement
-                                    ?.classList
-                                    .remove('radio-selecionado');
-
-                            });
-
-                        if (elemento.checked) {
-
-                            elemento.parentElement
-                                ?.classList
-                                .add('radio-selecionado');
-
-                        }
-                    });
-
-                });
-        }
-    };
-
-
-    /* =========================================================
-       CAMPOS
-    ========================================================= */
-
-    const Campos = {
-
-        inicializar() {
-
-            this.adicionarLimiteNumerico(elementos.numero, 4);
-            this.adicionarLimiteNumerico(elementos.ano, 4);
-
-            this.configurarUpperCase(elementos.municipio);
-        },
-
-        adicionarLimiteNumerico(elemento, limite) {
-
-            if (!elemento) {
-                return;
-            }
-
-            elemento.addEventListener('input', () => {
-
-                elemento.value = elemento.value
-                    .replace(/\D/g, '')
-                    .substring(0, limite);
-
-            });
-        },
-
-        configurarUpperCase(elemento) {
-
-            if (!elemento) {
-                return;
-            }
-
-            elemento.addEventListener('blur', () => {
-                elemento.value = elemento.value.trim();
-            });
-        }
-    };
-
-
-    /* =========================================================
-       FORMULÁRIO
-    ========================================================= */
-
-    const Formulario = {
-
-        inicializar() {
-
-            if (!elementos.formulario) {
-                return;
-            }
-
-            elementos.formulario.addEventListener(
-                'submit',
-                (evento) => this.enviar(evento)
-            );
-        },
-
-        enviar(evento) {
-
-            /*
-             * O Web Forms possui seu próprio mecanismo de validação.
-             * Não devemos bloquear o postback se a infraestrutura
-             * ASP.NET estiver presente.
-             */
-
-            if (typeof window.ValidatorOnSubmit === 'function') {
-
-                const resultado = window.ValidatorOnSubmit();
-
-                if (resultado === false) {
-                    evento.preventDefault();
-                    return;
-                }
-            }
-
-            if (!Validacao.formulario()) {
-                evento.preventDefault();
-                return;
-            }
-
-            this.estadoCarregando();
-        },
-
-        estadoCarregando() {
-
-            if (!elementos.botaoBuscar) {
-                return;
-            }
-
-            elementos.botaoBuscar.classList.add('carregando');
-
-            elementos.botaoBuscar.setAttribute(
-                'aria-busy',
-                'true'
-            );
-        }
-    };
-
-
-    /* =========================================================
-       IFRAME / ALTURA
-    ========================================================= */
-
-    const Iframe = {
-
-        inicializar() {
-
-            if (window.self === window.top) {
-                return;
-            }
-
-            this.enviarAltura();
-
-            window.addEventListener(
-                'resize',
-                () => this.enviarAltura()
-            );
-
-            this.observarAlteracoes();
-        },
-
-        obterAltura() {
-
-            if (!elementos.container) {
-                return document.documentElement.scrollHeight;
-            }
-
-            return elementos.container.clientHeight +
-                CONFIG.iframe.margem;
-        },
-
-        enviarAltura() {
-
-            const altura = this.obterAltura();
-
-            window.parent.postMessage(
-                {
-                    type: 'cdhu-resize',
-                    height: altura
-                },
-                '*'
-            );
-        },
-
-        observarAlteracoes() {
-
-            if (!elementos.container) {
-                return;
-            }
-
-            const observer = new MutationObserver(() => {
-                this.enviarAltura();
-            });
-
-            observer.observe(
-                elementos.container,
-                {
-                    attributes: true,
-                    childList: true,
-                    characterData: true,
-                    subtree: true
                 }
             );
         }
     };
 
 
-    /* =========================================================
-       ACESSIBILIDADE
-    ========================================================= */
+    /* ============================================================
+       EVENTOS
+    ============================================================ */
 
-    const Acessibilidade = {
+    const Eventos = {
 
         inicializar() {
 
-            if (elementos.data) {
-                elementos.data.setAttribute(
-                    'inputmode',
-                    'numeric'
-                );
+            if (elementos.formulario) {
 
-                elementos.data.setAttribute(
-                    'autocomplete',
-                    'off'
-                );
+                elementos.formulario.addEventListener(
+                    'submit',
+                    (evento) => {
 
-                elementos.data.setAttribute(
-                    'aria-label',
-                    'Data de abertura do envelope'
+                        evento.preventDefault();
+
+                        Busca.executar();
+                    }
                 );
             }
 
-            if (elementos.mensagem) {
-                elementos.mensagem.setAttribute(
-                    'role',
-                    'alert'
+            if (elementos.botaoBuscar) {
+
+                elementos.botaoBuscar.addEventListener(
+                    'click',
+                    (evento) => {
+
+                        evento.preventDefault();
+
+                        Busca.executar();
+                    }
                 );
             }
+
+            this.teclaEnter();
+        },
+
+        teclaEnter() {
+
+            document.addEventListener(
+                'keydown',
+                (evento) => {
+
+                    if (
+                        evento.key === 'Enter' &&
+                        evento.target.matches(
+                            'input'
+                        )
+                    ) {
+
+                        evento.preventDefault();
+
+                        Busca.executar();
+                    }
+                }
+            );
         }
     };
 
 
-    /* =========================================================
-       APLICAÇÃO
-    ========================================================= */
+    /* ============================================================
+       INICIALIZAÇÃO
+    ============================================================ */
 
     const App = {
 
         inicializar() {
 
-            DataMask.inicializar();
-            Radios.inicializar();
-            Campos.inicializar();
-            Formulario.inicializar();
-            Iframe.inicializar();
-            Acessibilidade.inicializar();
+            Mascara.inicializar();
+            Eventos.inicializar();
 
             console.info(
-                'Busca de Licitação inicializada.'
+                'Sistema de Busca de Licitações iniciado.'
             );
         }
     };
 
 
-    /* =========================================================
-       INICIALIZAÇÃO
-    ========================================================= */
+    /* ============================================================
+       START
+    ============================================================ */
 
     if (document.readyState === 'loading') {
 
         document.addEventListener(
             'DOMContentLoaded',
-            () => App.inicializar()
+            App.inicializar
         );
 
     } else {
@@ -646,16 +639,14 @@
     }
 
 
-    /* =========================================================
-       API OPCIONAL
-       Permite depuração pelo console.
-    ========================================================= */
+    /* ============================================================
+       API PÚBLICA
+       Útil para testes no console.
+    ============================================================ */
 
     window.BuscaLicitacao = {
-        validar: () => Validacao.formulario(),
-        enviarAltura: () => Iframe.enviarAltura(),
-        formatarData: (valor) => DataUtils.aplicarMascara(valor),
-        dataValida: (valor) => DataUtils.dataValida(valor)
+        buscar: () => Busca.executar(),
+        obterFiltros: () => Filtros.obter()
     };
 
 })();
