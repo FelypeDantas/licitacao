@@ -29,28 +29,28 @@
             api: {
                 buscar: 'https://licitacao-murex.vercel.app/api/licitacoes'
             },
-
-        campos: {
-            formulario: '#formBusca',
-
-            modalidade: '#modalidade',
-            numero: '#numero',
-            ano: '#ano',
-            municipio: '#municipio',
-            segmento: '#segmento',
-            data: '#data',
-
-            situacao: 'input[name="situacao"]:checked',
-            ordenacao: 'input[name="ordenacao"]:checked'
-        },
-
-        elementos: {
-            botaoBuscar: '#btnBuscar',
-            resultados: '#resultados',
-            mensagem: '#mensagem',
-            carregando: '#carregando'
-        }
-    };
+        
+            campos: {
+                formulario: '#form1',
+        
+                modalidade: '#modalidadeDropDownList',
+                numero: '#numTextBox',
+                ano: '#anoTextBox',
+                municipio: '#municipioTextBox',
+                segmento: '#segmentoDropDownList',
+                data: '#dataTextBox',
+        
+                situacao: 'input[name="situacao"]:checked',
+                ordenacao: 'input[name="ordenacao"]:checked'
+            },
+        
+            elementos: {
+                botaoBuscar: '#buscarImageButton',
+                resultados: '#resultados',
+                mensagem: '#mensagem',
+                carregando: '#carregando'
+            }
+        };
 
 
     /* ============================================================
