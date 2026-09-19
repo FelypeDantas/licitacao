@@ -549,60 +549,46 @@
     ============================================================ */
 
     const Eventos = {
-
+    
         inicializar() {
-
+    
             if (elementos.formulario) {
-
+    
                 elementos.formulario.addEventListener(
                     'submit',
                     (evento) => {
-
+    
                         evento.preventDefault();
-
+    
                         Busca.executar();
                     }
                 );
             }
-
-            if (elementos.botaoBuscar) {
-
-                elementos.botaoBuscar.addEventListener(
-                    'click',
-                    (evento) => {
-
-                        evento.preventDefault();
-
-                        Busca.executar();
-                    }
-                );
-            }
-
+    
             this.teclaEnter();
         },
-
+    
         teclaEnter() {
-
+    
             document.addEventListener(
                 'keydown',
                 (evento) => {
-
+    
                     if (
                         evento.key === 'Enter' &&
                         evento.target.matches(
                             'input'
                         )
                     ) {
-
+    
                         evento.preventDefault();
-
+    
                         Busca.executar();
                     }
                 }
             );
         }
     };
-
 
     /* ============================================================
        INICIALIZAÇÃO
