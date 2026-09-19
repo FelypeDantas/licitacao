@@ -184,33 +184,69 @@
     ============================================================ */
 
     const Validacao = {
-    
+
         executar(filtros) {
+    
+            /*
+             * Número e ano são filtros independentes.
+             *
+             * Exemplos válidos:
+             *
+             * número preenchido + ano vazio
+             * número vazio + ano preenchido
+             * número preenchido + ano preenchido
+             *
+             * O único caso inválido é deixar os dois vazios.
+             */
     
             if (!filtros.numero && !filtros.ano) {
                 return {
                     valido: false,
-                    mensagem: 'Informe o número e o ano da licitação.'
+                    mensagem: 'Informe o número ou o ano da licitação.'
                 };
             }
     
-            if (filtros.numero && !/^\d{1,4}$/.test(filtros.numero)) {
+            /*
+             * Mesmo padrão aceito pelo backend:
+             * 1 a 4 números + uma letra opcional.
+             *
+             * Exemplos:
+             * 1
+             * 12
+             * 123
+             * 1234
+             * 123A
+             */
+            if (
+                filtros.numero &&
+                !/^[0-9]{1,4}[A-Za-z]?$/.test(filtros.numero)
+            ) {
                 return {
                     valido: false,
-                    mensagem: 'O número da licitação deve conter apenas números.'
+                    mensagem: 'O número deve conter até 4 dígitos e, opcionalmente, uma letra.'
                 };
             }
     
-            if (filtros.ano && !/^\d{2,4}$/.test(filtros.ano)) {
+            /*
+             * Mesmo padrão aceito pelo backend:
+             * ano com 2 a 4 números.
+             */
+            if (
+                filtros.ano &&
+                !/^[0-9]{2,4}$/.test(filtros.ano)
+            ) {
                 return {
                     valido: false,
-                    mensagem: 'Informe um ano válido.'
+                    mensagem: 'O ano deve conter 2 ou 4 dígitos.'
                 };
             }
     
+            /*
+             * Data, quando informada, deve estar em dd/mm/aaaa.
+             */
             if (
                 filtros.data &&
-                !/^\d{2}\/\d{2}\/\d{4}$/.test(filtros.data)
+                !/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.test(filtros.data)
             ) {
                 return {
                     valido: false,
