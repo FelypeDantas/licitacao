@@ -184,30 +184,30 @@
     ============================================================ */
 
     const Validacao = {
-
+    
         executar(filtros) {
-
+    
             if (!filtros.numero && !filtros.ano) {
                 return {
                     valido: false,
                     mensagem: 'Informe o número e o ano da licitação.'
                 };
             }
-
+    
             if (filtros.numero && !/^\d{1,4}$/.test(filtros.numero)) {
                 return {
                     valido: false,
                     mensagem: 'O número da licitação deve conter apenas números.'
                 };
             }
-
+    
             if (filtros.ano && !/^\d{2,4}$/.test(filtros.ano)) {
                 return {
                     valido: false,
                     mensagem: 'Informe um ano válido.'
                 };
             }
-
+    
             if (
                 filtros.data &&
                 !/^\d{2}\/\d{2}\/\d{4}$/.test(filtros.data)
@@ -217,7 +217,7 @@
                     mensagem: 'A data deve estar no formato dd/mm/aaaa.'
                 };
             }
-
+    
             return {
                 valido: true,
                 mensagem: ''
